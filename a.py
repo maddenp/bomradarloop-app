@@ -1,16 +1,28 @@
 from PIL import Image
 import datetime as dt
 import imageio
+import io
 import numpy as np
+import requests
 import time
 
 radar = {
-    'Sydney': 'IDR763',
+    'Sydney': 'IDR713',
 }
 
 def getbg(location):
-    fn = f'{radar[location]}.background.png'
-    return Image.open(fn).convert('RGBA')
+    url = geturl(f'products/radar_transparencies/{radar[location]}.background.png')
+    return getimage(url)
+
+def getfg(location, timestr):
+    url = geturl(f'/radar/{radar[location]}.T.{timestr}.png')
+    return getimage(url)
+
+def getimage(url):
+    return Image.open(io.BytesIO(requests.get(url).content)).convert('RGBA')
+
+def geturl(path):
+    return f'http://www.bom.gov.au/{path}'
 
 location = 'Sydney'
 
@@ -25,8 +37,8 @@ strs = [mkdt(n).strftime('%Y%m%d%H%M') for n in range(nimages-1, -1, -1)]
 # print(dt.datetime.fromtimestamp(ts_now, tz=dt.timezone.utc).strftime('%Y%m%d%H%M'))
 # print(dt.datetime.fromtimestamp(ts_fix, tz=dt.timezone.utc).strftime('%Y%m%d%H%M'))
 # print()
-# for x in strs:
-#     print(x)
+for x in strs:
+    print(x)
 
 ns = ('0254', '0300', '0306', '0312', '0318', '0324')
 bg = getbg(location)
