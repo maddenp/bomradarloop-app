@@ -1,3 +1,4 @@
+from functools import lru_cache
 import datetime as dt
 import io
 import time
@@ -11,34 +12,35 @@ radar = {
     'Sydney': 'IDR713',
 }
 
+radar_interval_sec = 360 # 6 min x 60 sec/min
 
+#@lru_cache
 def get_bg(location):
     url = get_url(f'products/radar_transparencies/{radar[location]}.background.png')
     return get_image(url)
 
 
-def get_fg(location, timestr):
-    url = get_url(f'/radar/{radar[location]}.T.{timestr}.png')
+#@lru_cache
+def get_fg(location, time_str):
+    url = get_url(f'/radar/{radar[location]}.T.{time_str}.png')
     return get_image(url)
 
 
-def get_fgs(location):
+#@lru_cache
+def get_fgs(location, start):
     bg = get_bg(location)
     merge = lambda bg, fg: np.array(Image.alpha_composite(bg, fg))
-    return [merge(bg, get_fg(location, timestr)) for timestr in get_time_strs()]
+    return [merge(bg, get_fg(location, time_str)) for time_str in get_time_strs(start)]
 
 
 def get_image(url):
     return Image.open(io.BytesIO(requests.get(url).content)).convert('RGBA')
 
 
-def get_time_strs():
+#@lru_cache
+def get_time_strs(start):
     nimages = 6
-    radar_interval_min = 6
-    radar_interval_sec = radar_interval_min * 60
-    ts_now = int(time.time())
-    ts_fix = ts_now - (ts_now % radar_interval_sec)
-    mkdt = lambda n: dt.datetime.fromtimestamp(ts_fix - (radar_interval_sec * n), tz=dt.timezone.utc)
+    mkdt = lambda n: dt.datetime.fromtimestamp(start - (radar_interval_sec * n), tz=dt.timezone.utc)
     return [mkdt(n).strftime('%Y%m%d%H%M') for n in range(nimages, 0, -1)]
 
 
@@ -47,7 +49,9 @@ def get_url(path):
 
 
 def write_gif(location):
-    imageio.mimsave('loop.gif', get_fgs(location), fps=2)
+    now = int(time.time())
+    start = now - (now % radar_interval_sec)
+    imageio.mimsave('loop.gif', get_fgs(location, start), fps=2)
 
 
 write_gif('Sydney')
