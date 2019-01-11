@@ -1,37 +1,38 @@
-from PIL import Image
 import datetime as dt
-import imageio
 import io
+import time
+
+from PIL import Image
+import imageio
 import numpy as np
 import requests
-import time
 
 radar = {
     'Sydney': 'IDR713',
 }
 
 
-def getbg(location):
-    url = geturl(f'products/radar_transparencies/{radar[location]}.background.png')
-    return getimage(url)
+def get_bg(location):
+    url = get_url(f'products/radar_transparencies/{radar[location]}.background.png')
+    return get_image(url)
 
 
-def getfg(location, timestr):
-    url = geturl(f'/radar/{radar[location]}.T.{timestr}.png')
-    return getimage(url)
+def get_fg(location, timestr):
+    url = get_url(f'/radar/{radar[location]}.T.{timestr}.png')
+    return get_image(url)
 
 
-def getfgs(location):
-    bg = getbg(location)
+def get_fgs(location):
+    bg = get_bg(location)
     merge = lambda bg, fg: np.array(Image.alpha_composite(bg, fg))
-    return [merge(bg, getfg(location, timestr)) for timestr in gettimestrs()]
+    return [merge(bg, get_fg(location, timestr)) for timestr in get_time_strs()]
 
 
-def getimage(url):
+def get_image(url):
     return Image.open(io.BytesIO(requests.get(url).content)).convert('RGBA')
 
 
-def gettimestrs():
+def get_time_strs():
     nimages = 6
     radar_interval_min = 6
     radar_interval_sec = radar_interval_min * 60
@@ -41,12 +42,12 @@ def gettimestrs():
     return [mkdt(n).strftime('%Y%m%d%H%M') for n in range(nimages, 0, -1)]
 
 
-def geturl(path):
+def get_url(path):
     return f'http://www.bom.gov.au/{path}'
 
 
-def go(location):
-    imageio.mimsave('loop.gif', getfgs(location), fps=2)
+def write_gif(location):
+    imageio.mimsave('loop.gif', get_fgs(location), fps=2)
 
 
-go('Sydney')
+write_gif('Sydney')
