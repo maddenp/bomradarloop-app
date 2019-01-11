@@ -38,4 +38,7 @@ def gettimestrs():
 def geturl(path):
     return f'http://www.bom.gov.au/{path}'
 
-imageio.mimsave('loop.gif', getfgs('Sydney'), fps=2)
+def go(location):
+    imageio.mimsave('loop.gif', getfgs(location), fps=2)
+
+go('Sydney')
