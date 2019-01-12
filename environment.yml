@@ -1,0 +1,9 @@
+name: bomloop
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  - flask=1.0.2
+  - pillow=5.4.1
+  - python=3
+  - requests=2.21.0
