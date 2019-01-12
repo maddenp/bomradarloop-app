@@ -160,7 +160,7 @@ def main():
     start = now - (now % radar_interval_sec)
     loop = get_loop(location, start)
     if loop is None:
-        return error('Radar imagery currently unavailable for %s' % location, values=False)
+        return error('Current radar imagery unavailable for %s' % location, values=False)
     return flask.Response(loop, mimetype='image/jpeg')
 
 
