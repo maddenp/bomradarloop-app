@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+# pylint: disable=no-member
+
 import datetime as dt
 import functools
 import io
@@ -76,6 +78,7 @@ radars = {
 
 app = flask.Flask(__name__)
 
+
 def error(msg, values=True):
     data = {'error_message': msg}
     if values:
@@ -84,7 +87,7 @@ def error(msg, values=True):
 
 @functools.lru_cache(maxsize=len(radars))
 def get_bg(location, start): # pylint: disable=unused-argument
-    app.logger.error('get_bg')
+    app.logger.info('get_bg')
     url = get_url(f'products/radar_transparencies/IDR{radars[location]}.background.png')
     return get_image(url)
 

@@ -1,7 +1,5 @@
 [BASIC]
 
-extension-pkg-whitelist=lxml,mpi4py
-
 argument-rgx  = [_a-zA-Z][_a-zA-Z0-9]*
 attr-rgx      = [_a-zA-Z][_a-zA-Z0-9]*
 const-rgx     = [_a-zA-Z][_a-zA-Z0-9]*
