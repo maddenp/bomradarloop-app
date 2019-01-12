@@ -19,60 +19,28 @@ radar_interval_sec = 360 # 6 min x 60 sec/min
 
 radars = {
     'Adelaide': '643',
-    'Albany': '313',
-    'AliceSprings': '253',
-    'Bairnsdale': '683',
-    'Bowen': '243',
     'Brisbane': '663',
-    'Broome': '173',
     'Cairns': '193',
     'Canberra': '403',
-    'Carnarvon': '053',
-    'Ceduna': '333',
-    'Dampier': '153',
     'Darwin': '633',
     'Emerald': '723',
-    'Esperance': '323',
-    'Geraldton': '063',
-    'Giles': '443',
-    'Gladstone': '233',
-    'Gove': '093',
-    'Grafton': '283',
     'Gympie': '083',
-    'HallsCreek': '393',
     'Hobart': '763',
     'Kalgoorlie': '483',
-    'Katherine': '423',
-    'Learmonth': '293',
-    'Longreach': '563',
-    'Mackay': '223',
-    'Marburg': '503',
     'Melbourne': '023',
-    'Mildura': '303',
-    'Moree': '533',
-    'MorningtonIs': '363',
     'MountIsa': '753',
-    'MtGambier': '143',
     'Namoi': '693',
     'Newcastle': '043',
     'Newdegate': '383',
-    'NorfolkIs': '623',
     'NWTasmania': '523',
     'Perth': '703',
-    'PortHedland': '163',
-    'SellicksHill': '463',
     'SouthDoodlakine': '583',
     'Sydney': '713',
     'Townsville': '733',
-    'WaggaWagga': '553',
-    'Warrego': '673',
     'Warruwi': '773',
     'Watheroo': '793',
     'Weipa': '783',
-    'WillisIs': '413',
     'Wollongong': '033',
-    'Woomera': '273',
-    'Wyndham': '073',
     'Yarrawonga': '493',
 }
 
@@ -85,22 +53,23 @@ def error(msg, values=True):
         data.update({'valid_values': list(radars.keys())})
     return flask.Response(json.dumps(data), status=400, mimetype='application/json')
 
+
 @functools.lru_cache(maxsize=len(radars))
 def get_bg(location, start): # pylint: disable=unused-argument
-    app.logger.info('get_bg')
+    app.logger.info('Getting background for %s at %s', location, start)
     url = get_url(f'products/radar_transparencies/IDR{radars[location]}.background.png')
     return get_image(url)
 
 
 @functools.lru_cache(maxsize=len(radars)*6)
 def get_fg(location, time_str):
-    app.logger.info('get_fg')
+    app.logger.info('Getting foreground for %s at %s', location, time_str)
     url = get_url(f'/radar/IDR{radars[location]}.T.{time_str}.png')
     return get_image(url)
 
 
 def get_image(url):
-    app.logger.info('get_image')
+    app.logger.info('Getting image %s', url)
     response = requests.get(url)
     if response.status_code == 200:
         return PIL.Image.open(io.BytesIO(response.content)).convert('RGBA')
@@ -108,7 +77,7 @@ def get_image(url):
 
 
 def get_frames(location, start):
-    app.logger.info('get_frames')
+    app.logger.info('Getting frames for %s at %s', location, start)
     bg = get_bg(location, start)
     get = lambda time_str: get_fg(location, time_str)
     raw = multiprocessing.dummy.Pool(nimages).map(get, get_time_strs(start))
@@ -121,11 +90,12 @@ def get_frames(location, start):
 
 @functools.lru_cache(maxsize=len(radars))
 def get_loop(location, start):
-    app.logger.info('get_loop')
+    app.logger.info('Getting loop for %s at %s', location, start)
     loop = io.BytesIO()
     frames = get_frames(location, start)
     if frames is None:
         return None
+    app.logger.info('Got %s frames for %s at %s', len(frames), location, start)
     frames[0].save(
         loop,
         append_images=frames[1:],
@@ -139,13 +109,13 @@ def get_loop(location, start):
 
 @functools.lru_cache(maxsize=1)
 def get_time_strs(start):
-    app.logger.info('get_time_strs')
+    app.logger.debug('Getting time strings starting at %s', start)
     mkdt = lambda n: dt.datetime.fromtimestamp(start - (radar_interval_sec * n), tz=dt.timezone.utc)
     return [mkdt(n).strftime('%Y%m%d%H%M') for n in range(nimages, 0, -1)]
 
 
 def get_url(path):
-    app.logger.info('get_url')
+    app.logger.debug('Getting URL for path %s', path)
     return f'http://www.bom.gov.au/{path}'
 
 
@@ -171,3 +141,39 @@ if __name__ == '__main__':
     logging.Formatter.converter = time.gmtime
     logging.basicConfig(format="[%(asctime)s] %(levelname)s %(message)s", datefmt=datefmt, level=level)
     app.run()
+
+lores_radars = {
+    'Albany': '313',
+    'AliceSprings': '253',
+    'Bairnsdale': '683',
+    'Bowen': '243',
+    'Broome': '173',
+    'Carnarvon': '053',
+    'Ceduna': '333',
+    'Dampier': '153',
+    'Esperance': '323',
+    'Geraldton': '063',
+    'Giles': '443',
+    'Gladstone': '233',
+    'Gove': '093',
+    'Grafton': '283',
+    'HallsCreek': '393',
+    'Katherine': '423',
+    'Learmonth': '293',
+    'Longreach': '563',
+    'Mackay': '223',
+    'Marburg': '503',
+    'Mildura': '303',
+    'Moree': '533',
+    'MorningtonIs': '363',
+    'MtGambier': '143',
+    'NorfolkIs': '623',
+    'PortHedland': '163',
+    'SellicksHill': '463',
+    'WaggaWagga': '553',
+    'Warrego': '673',
+    'WillisIs': '413',
+    'Woomera': '273',
+    'Wyndham': '073',
+    }
+    
