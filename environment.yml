@@ -1,4 +1,4 @@
-name: bomloop
+name: bomradar
 channels:
   - conda-forge
   - nodefaults
