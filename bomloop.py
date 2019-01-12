@@ -81,8 +81,8 @@ def error(msg):
     }
     return flask.Response(json.dumps(data), status=400, mimetype='application/json')
 
-@functools.lru_cache()
-def get_bg(location):
+@functools.lru_cache(maxsize=len(radars))
+def get_bg(location, start): # pylint: disable=unused-argument
     url = get_url(f'products/radar_transparencies/IDR{radars[location]}.background.png')
     return get_image(url)
 
@@ -95,15 +95,13 @@ def get_fg(location, time_str):
 
 def get_image(url):
     response = requests.get(url)
-#     print('### %s response %s' % (url, response.status_code))
     if response.status_code == 200:
         return PIL.Image.open(io.BytesIO(response.content)).convert('RGBA')
     return None
 
 
-@functools.lru_cache()
 def get_frames(location, start):
-    bg = get_bg(location)
+    bg = get_bg(location, start)
     get = lambda time_str: get_fg(location, time_str)
     raw = multiprocessing.dummy.Pool(nimages).map(get, get_time_strs(start))
     fgs = [x for x in raw if x is not None]
@@ -111,7 +109,7 @@ def get_frames(location, start):
     return multiprocessing.dummy.Pool(len(fgs)).map(comp, fgs)
 
 
-@functools.lru_cache()
+@functools.lru_cache(maxsize=len(radars))
 def get_loop(location, start):
     loop = io.BytesIO()
     frames = get_frames(location, start)
@@ -126,7 +124,7 @@ def get_loop(location, start):
     return loop.getvalue()
 
 
-@functools.lru_cache()
+@functools.lru_cache(maxsize=1)
 def get_time_strs(start):
     mkdt = lambda n: dt.datetime.fromtimestamp(start - (radar_interval_sec * n), tz=dt.timezone.utc)
     return [mkdt(n).strftime('%Y%m%d%H%M') for n in range(nimages, 0, -1)]
