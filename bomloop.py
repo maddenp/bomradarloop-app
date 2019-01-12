@@ -13,7 +13,62 @@ nimages = 6
 radar_interval_sec = 360 # 6 min x 60 sec/min
 
 radars = {
-    'Sydney': 'IDR713',
+    'Adelaide': '643',
+    'Albany': '313',
+    'AliceSprings': '253',
+    'Bairnsdale': '683',
+    'Bowen': '243',
+    'Brisbane': '663',
+    'Broome': '173',
+    'Cairns': '193',
+    'Canberra': '403',
+    'Carnarvon': '053',
+    'Ceduna': '333',
+    'Dampier': '153',
+    'Darwin': '633',
+    'Emerald': '723',
+    'Esperance': '323',
+    'Geraldton': '063',
+    'Giles': '443',
+    'Gladstone': '233',
+    'Gove': '093',
+    'Grafton': '283',
+    'Gympie': '083',
+    'HallsCreek': '393',
+    'Hobart': '763',
+    'Kalgoorlie': '483',
+    'Katherine': '423',
+    'Learmonth': '293',
+    'Longreach': '563',
+    'Mackay': '223',
+    'Marburg': '503',
+    'Melbourne': '023',
+    'Mildura': '303',
+    'Moree': '533',
+    'MorningtonIs': '363',
+    'MountIsa': '753',
+    'MtGambier': '143',
+    'Namoi': '693',
+    'Newcastle': '043',
+    'Newdegate': '383',
+    'NorfolkIs': '623',
+    'NWTasmania': '523',
+    'Perth': '703',
+    'PortHedland': '163',
+    'SellicksHill': '463',
+    'SouthDoodlakine': '583',
+    'Sydney': '713',
+    'Townsville': '733',
+    'WaggaWagga': '553',
+    'Warrego': '673',
+    'Warruwi': '773',
+    'Watheroo': '793',
+    'Weipa': '783',
+    'WillisIs': '413',
+    'Wollongong': '033',
+    'Woomera': '273',
+    'Wyndham': '073',
+    'Yarrawonga': '493',
 }
 
 app = flask.Flask(__name__)
@@ -28,18 +83,23 @@ def error(msg):
 
 @functools.lru_cache()
 def get_bg(location):
-    url = get_url(f'products/radar_transparencies/{radars[location]}.background.png')
+    url = get_url(f'products/radar_transparencies/IDR{radars[location]}.background.png')
     return get_image(url)
 
 
 @functools.lru_cache()
 def get_fg(location, time_str):
-    url = get_url(f'/radar/{radars[location]}.T.{time_str}.png')
+    url = get_url(f'/radar/IDR{radars[location]}.T.{time_str}.png')
     return get_image(url)
 
 
 def get_image(url):
-    return PIL.Image.open(io.BytesIO(requests.get(url).content)).convert('RGBA')
+    response = requests.get(url)
+    print('### %s response %s' % (url, response.status_code))
+    if response.status_code == 200:
+        return PIL.Image.open(io.BytesIO(response.content)).convert('RGBA')
+    else:
+        return PIL.Image.new('RGBA', (512, 512), color=None)
 
 
 @functools.lru_cache()
