@@ -1,7 +1,10 @@
+#!/usr/bin/env python
+
 import datetime as dt
 import functools
 import io
 import json
+import logging
 import multiprocessing.dummy
 import time
 
@@ -73,7 +76,6 @@ radars = {
 
 app = flask.Flask(__name__)
 
-
 def error(msg, values=True):
     data = {'error_message': msg}
     if values:
@@ -82,20 +84,20 @@ def error(msg, values=True):
 
 @functools.lru_cache(maxsize=len(radars))
 def get_bg(location, start): # pylint: disable=unused-argument
-    print('### get_bg')
+    app.logger.error('get_bg')
     url = get_url(f'products/radar_transparencies/IDR{radars[location]}.background.png')
     return get_image(url)
 
 
 @functools.lru_cache(maxsize=len(radars)*6)
 def get_fg(location, time_str):
-    print('### get_fg')
+    app.logger.info('get_fg')
     url = get_url(f'/radar/IDR{radars[location]}.T.{time_str}.png')
     return get_image(url)
 
 
 def get_image(url):
-    print('### get_image')
+    app.logger.info('get_image')
     response = requests.get(url)
     if response.status_code == 200:
         return PIL.Image.open(io.BytesIO(response.content)).convert('RGBA')
@@ -103,7 +105,7 @@ def get_image(url):
 
 
 def get_frames(location, start):
-    print('### get_frames')
+    app.logger.info('get_frames')
     bg = get_bg(location, start)
     get = lambda time_str: get_fg(location, time_str)
     raw = multiprocessing.dummy.Pool(nimages).map(get, get_time_strs(start))
@@ -116,7 +118,7 @@ def get_frames(location, start):
 
 @functools.lru_cache(maxsize=len(radars))
 def get_loop(location, start):
-    print('### get_loop')
+    app.logger.info('get_loop')
     loop = io.BytesIO()
     frames = get_frames(location, start)
     if frames is None:
@@ -134,13 +136,13 @@ def get_loop(location, start):
 
 @functools.lru_cache(maxsize=1)
 def get_time_strs(start):
-    print('### get_time_strs')
+    app.logger.info('get_time_strs')
     mkdt = lambda n: dt.datetime.fromtimestamp(start - (radar_interval_sec * n), tz=dt.timezone.utc)
     return [mkdt(n).strftime('%Y%m%d%H%M') for n in range(nimages, 0, -1)]
 
 
 def get_url(path):
-    print('### get_url')
+    app.logger.info('get_url')
     return f'http://www.bom.gov.au/{path}'
 
 
@@ -157,3 +159,12 @@ def main():
     if loop is None:
         return error('Radar imagery currently unavailable for %s' % location, values=False)
     return flask.Response(loop, mimetype='image/jpeg')
+
+
+if __name__ == '__main__':
+    debug = False
+    level = logging.DEBUG if debug else logging.INFO
+    datefmt = "%Y-%m-%dT%H:%M:%SZ"
+    logging.Formatter.converter = time.gmtime
+    logging.basicConfig(format="[%(asctime)s] %(levelname)s %(message)s", datefmt=datefmt, level=level)
+    app.run()
