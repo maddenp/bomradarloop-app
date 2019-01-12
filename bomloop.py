@@ -1,6 +1,7 @@
 import datetime as dt
 import functools
 import io
+import json
 import multiprocessing.dummy
 import time
 
@@ -11,21 +12,29 @@ import requests
 nimages = 6
 radar_interval_sec = 360 # 6 min x 60 sec/min
 
-radar = {
+radars = {
     'Sydney': 'IDR713',
 }
 
 app = flask.Flask(__name__)
 
+
+def error(msg):
+    data = {
+        'error_message': msg,
+        'valid_values': list(radars.keys()),
+    }
+    return flask.Response(json.dumps(data), status=400, mimetype='application/json')
+
 @functools.lru_cache()
 def get_bg(location):
-    url = get_url(f'products/radar_transparencies/{radar[location]}.background.png')
+    url = get_url(f'products/radar_transparencies/{radars[location]}.background.png')
     return get_image(url)
 
 
 @functools.lru_cache()
 def get_fg(location, time_str):
-    url = get_url(f'/radar/{radar[location]}.T.{time_str}.png')
+    url = get_url(f'/radar/{radars[location]}.T.{time_str}.png')
     return get_image(url)
 
 
@@ -66,7 +75,11 @@ def get_url(path):
 
 @app.route('/')
 def main():
-    location = 'Sydney'
+    location = flask.request.args.get('location')
+    if location is None:
+        return error('No value received for parameter: location')
+    if radars.get(location) is None:
+        return error('Bad location value %s' % location)
     now = int(time.time())
     start = now - (now % radar_interval_sec)
     return flask.Response(get_loop(location, start), mimetype='image/jpeg')
