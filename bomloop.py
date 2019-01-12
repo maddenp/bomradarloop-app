@@ -87,7 +87,7 @@ def get_bg(location, start): # pylint: disable=unused-argument
     return get_image(url)
 
 
-@functools.lru_cache()
+@functools.lru_cache(maxsize=len(radars)*6)
 def get_fg(location, time_str):
     url = get_url(f'/radar/IDR{radars[location]}.T.{time_str}.png')
     return get_image(url)
