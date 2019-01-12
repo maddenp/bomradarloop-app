@@ -6,17 +6,20 @@ import datetime as dt
 import io
 import time
 
+from flask import Flask
 from PIL import Image
 import imageio
 import numpy as np
 import requests
 
+nimages = 6
+radar_interval_sec = 360 # 6 min x 60 sec/min
+
 radar = {
     'Sydney': 'IDR713',
 }
 
-nimages = 6
-radar_interval_sec = 360 # 6 min x 60 sec/min
+app = Flask(__name__)
 
 @lru_cache()
 def get_bg(location):
@@ -50,11 +53,10 @@ def get_time_strs(start):
 def get_url(path):
     return f'http://www.bom.gov.au/{path}'
 
-
-def write_gif(location):
+@app.route('/')
+def main():
+    location = 'Sydney'
     now = int(time.time())
     start = now - (now % radar_interval_sec)
     imageio.mimsave('loop.gif', get_fgs(location, start), fps=2)
-
-
-write_gif('Sydney')
+    return "OK"
