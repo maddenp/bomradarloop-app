@@ -1,0 +1,30 @@
+[BASIC]
+
+extension-pkg-whitelist=lxml,mpi4py
+
+argument-rgx  = [_a-zA-Z][_a-zA-Z0-9]*
+attr-rgx      = [_a-zA-Z][_a-zA-Z0-9]*
+const-rgx     = [_a-zA-Z][_a-zA-Z0-9]*
+function-rgx  = [_a-zA-Z][_a-zA-Z0-9]*
+method-rgx    = [_a-zA-Z][_a-zA-Z0-9]*
+variable-rgx  = [_a-zA-Z][_a-zA-Z0-9]*
+
+[FORMAT]
+
+max-line-length = 132
+
+[MESSAGES CONTROL]
+
+disable = C0111,C0302,C0414,R0901,R0902,R0903,R0904,R0911,R0912,R0913,R0914,R0915,R0916,R1702,W0403,W0511,W0603
+
+[MISCELLANEOUS]
+
+notes=
+
+[REPORTS]
+
+score=no
+
+[SIMILARITIES]
+
+ignore-imports=yes

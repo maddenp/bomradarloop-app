@@ -1,4 +1,7 @@
+# flask
+
 from functools import lru_cache
+from multiprocessing.dummy import Pool
 import datetime as dt
 import io
 import time
@@ -12,6 +15,7 @@ radar = {
     'Sydney': 'IDR713',
 }
 
+nimages = 6
 radar_interval_sec = 360 # 6 min x 60 sec/min
 
 @lru_cache()
@@ -29,8 +33,8 @@ def get_fg(location, time_str):
 @lru_cache()
 def get_fgs(location, start):
     bg = get_bg(location)
-    merge = lambda bg, fg: np.array(Image.alpha_composite(bg, fg))
-    return [merge(bg, get_fg(location, time_str)) for time_str in get_time_strs(start)]
+    fn = lambda time_str: np.array(Image.alpha_composite(bg, get_fg(location, time_str)))
+    return Pool(nimages).map(fn, get_time_strs(start))
 
 
 def get_image(url):
@@ -39,7 +43,6 @@ def get_image(url):
 
 @lru_cache()
 def get_time_strs(start):
-    nimages = 6
     mkdt = lambda n: dt.datetime.fromtimestamp(start - (radar_interval_sec * n), tz=dt.timezone.utc)
     return [mkdt(n).strftime('%Y%m%d%H%M') for n in range(nimages, 0, -1)]
 
