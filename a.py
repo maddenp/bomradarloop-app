@@ -7,7 +7,7 @@ import io
 import time
 
 from flask import Flask, Response
-from PIL import Image, ImageDraw
+from PIL import Image
 import requests
 
 nimages = 6
@@ -48,11 +48,10 @@ def get_loop(location, start):
     frames = get_frames(location, start)
     frames[0].save(
         loop,
+        append_images=frames[1:],
+        duration=500,
         format='GIF',
         save_all=True,
-        append_images=frames[1:],
-        delay=0.5,
-        loop=0
     )
     return loop.getvalue()
 
