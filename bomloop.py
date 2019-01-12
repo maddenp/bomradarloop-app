@@ -98,15 +98,17 @@ def get_image(url):
 #     print('### %s response %s' % (url, response.status_code))
     if response.status_code == 200:
         return PIL.Image.open(io.BytesIO(response.content)).convert('RGBA')
-    else:
-        return PIL.Image.new('RGBA', (512, 512), color=None)
+    return None
 
 
 @functools.lru_cache()
 def get_frames(location, start):
     bg = get_bg(location)
-    fn = lambda time_str: PIL.Image.alpha_composite(bg, get_fg(location, time_str))
-    return multiprocessing.dummy.Pool(nimages).map(fn, get_time_strs(start))
+    get = lambda time_str: get_fg(location, time_str)
+    raw = multiprocessing.dummy.Pool(nimages).map(get, get_time_strs(start))
+    fgs = [x for x in raw if x is not None]
+    comp = lambda fg: PIL.Image.alpha_composite(bg, fg)
+    return multiprocessing.dummy.Pool(len(fgs)).map(comp, fgs)
 
 
 @functools.lru_cache()
