@@ -6,10 +6,8 @@ import datetime as dt
 import io
 import time
 
-from flask import Flask
-from PIL import Image
-import imageio
-import numpy as np
+from flask import Flask, Response
+from PIL import Image, ImageDraw
 import requests
 
 nimages = 6
@@ -33,15 +31,30 @@ def get_fg(location, time_str):
     return get_image(url)
 
 
+def get_image(url):
+    return Image.open(io.BytesIO(requests.get(url).content)).convert('RGBA')
+
+
 @lru_cache()
-def get_fgs(location, start):
+def get_frames(location, start):
     bg = get_bg(location)
-    fn = lambda time_str: np.array(Image.alpha_composite(bg, get_fg(location, time_str)))
+    fn = lambda time_str: Image.alpha_composite(bg, get_fg(location, time_str))
     return Pool(nimages).map(fn, get_time_strs(start))
 
 
-def get_image(url):
-    return Image.open(io.BytesIO(requests.get(url).content)).convert('RGBA')
+@lru_cache()
+def get_loop(location, start):
+    loop = io.BytesIO()
+    frames = get_frames(location, start)
+    frames[0].save(
+        loop,
+        format='GIF',
+        save_all=True,
+        append_images=frames[1:],
+        delay=0.5,
+        loop=0
+    )
+    return loop.getvalue()
 
 
 @lru_cache()
@@ -53,10 +66,10 @@ def get_time_strs(start):
 def get_url(path):
     return f'http://www.bom.gov.au/{path}'
 
+
 @app.route('/')
 def main():
     location = 'Sydney'
     now = int(time.time())
     start = now - (now % radar_interval_sec)
-    imageio.mimsave('loop.gif', get_fgs(location, start), fps=2)
-    return "OK"
+    return Response(get_loop(location, start), mimetype='image/jpeg')
