@@ -74,26 +74,28 @@ radars = {
 app = flask.Flask(__name__)
 
 
-def error(msg):
-    data = {
-        'error_message': msg,
-        'valid_values': list(radars.keys()),
-    }
+def error(msg, values=True):
+    data = {'error_message': msg}
+    if values:
+        data.update({'valid_values': list(radars.keys())})
     return flask.Response(json.dumps(data), status=400, mimetype='application/json')
 
 @functools.lru_cache(maxsize=len(radars))
 def get_bg(location, start): # pylint: disable=unused-argument
+    print('### get_bg')
     url = get_url(f'products/radar_transparencies/IDR{radars[location]}.background.png')
     return get_image(url)
 
 
 @functools.lru_cache(maxsize=len(radars)*6)
 def get_fg(location, time_str):
+    print('### get_fg')
     url = get_url(f'/radar/IDR{radars[location]}.T.{time_str}.png')
     return get_image(url)
 
 
 def get_image(url):
+    print('### get_image')
     response = requests.get(url)
     if response.status_code == 200:
         return PIL.Image.open(io.BytesIO(response.content)).convert('RGBA')
@@ -101,18 +103,24 @@ def get_image(url):
 
 
 def get_frames(location, start):
+    print('### get_frames')
     bg = get_bg(location, start)
     get = lambda time_str: get_fg(location, time_str)
     raw = multiprocessing.dummy.Pool(nimages).map(get, get_time_strs(start))
     fgs = [x for x in raw if x is not None]
+    if not fgs:
+        return None
     comp = lambda fg: PIL.Image.alpha_composite(bg, fg)
     return multiprocessing.dummy.Pool(len(fgs)).map(comp, fgs)
 
 
 @functools.lru_cache(maxsize=len(radars))
 def get_loop(location, start):
+    print('### get_loop')
     loop = io.BytesIO()
     frames = get_frames(location, start)
+    if frames is None:
+        return None
     frames[0].save(
         loop,
         append_images=frames[1:],
@@ -126,11 +134,13 @@ def get_loop(location, start):
 
 @functools.lru_cache(maxsize=1)
 def get_time_strs(start):
+    print('### get_time_strs')
     mkdt = lambda n: dt.datetime.fromtimestamp(start - (radar_interval_sec * n), tz=dt.timezone.utc)
     return [mkdt(n).strftime('%Y%m%d%H%M') for n in range(nimages, 0, -1)]
 
 
 def get_url(path):
+    print('### get_url')
     return f'http://www.bom.gov.au/{path}'
 
 
@@ -138,9 +148,12 @@ def get_url(path):
 def main():
     location = flask.request.args.get('location')
     if location is None:
-        return error('No value received for parameter: location')
+        return error("No value received for parameter 'location'")
     if radars.get(location) is None:
-        return error('Bad location value %s' % location)
+        return error("Bad location value '%s'" % location)
     now = int(time.time())
     start = now - (now % radar_interval_sec)
-    return flask.Response(get_loop(location, start), mimetype='image/jpeg')
+    loop = get_loop(location, start)
+    if loop is None:
+        return error('Radar imagery currently unavailable for %s' % location, values=False)
+    return flask.Response(loop, mimetype='image/jpeg')
