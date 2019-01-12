@@ -95,7 +95,7 @@ def get_fg(location, time_str):
 
 def get_image(url):
     response = requests.get(url)
-    print('### %s response %s' % (url, response.status_code))
+#     print('### %s response %s' % (url, response.status_code))
     if response.status_code == 200:
         return PIL.Image.open(io.BytesIO(response.content)).convert('RGBA')
     else:
@@ -118,6 +118,7 @@ def get_loop(location, start):
         append_images=frames[1:],
         duration=500,
         format='GIF',
+        loop=0,
         save_all=True,
     )
     return loop.getvalue()
