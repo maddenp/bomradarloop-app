@@ -170,4 +170,3 @@ lores_radars = {
     'Woomera': '273',
     'Wyndham': '073',
     }
-    
