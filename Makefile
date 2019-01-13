@@ -12,7 +12,7 @@ deploy: prep
 	gcloud app deploy --project bomradar
 
 devserver: prep
-	CLOUDSDK_PYTHON=python2 dev_appserver.py app.yaml
+	CLOUDSDK_PYTHON=python2 dev_appserver.py --application=bomradar app.yaml
 
 prep:
 	pip install -t lib -r requirements.txt
