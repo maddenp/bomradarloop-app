@@ -1,4 +1,5 @@
 *.gif
 *.png
 __pycache__
+env
 lib
