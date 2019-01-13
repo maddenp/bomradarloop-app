@@ -1,5 +1,5 @@
 SHELL=/bin/bash
-TARGETS = devserver
+TARGETS = deploy devserver
 
 .ONESHELL:
 
@@ -7,6 +7,9 @@ TARGETS = devserver
 
 all:
 	$(error Valid targets are: $(TARGETS))
+
+deploy: prep
+	gcloud app deploy --project bomradar
 
 devserver: prep
 	CLOUDSDK_PYTHON=python2 dev_appserver.py app.yaml
