@@ -46,13 +46,7 @@ radars = {
 
 app = flask.Flask(__name__)
 
-
-def error(msg, values=True):
-    data = {'error_message': msg}
-    if values:
-        data.update({'valid_values': list(radars.keys())})
-    return flask.Response(json.dumps(data), status=400, mimetype='application/json')
-
+valids = 'Valid locations are: %s' % ', '.join(radars.keys())
 
 @functools.lru_cache(maxsize=len(radars))
 def get_bg(location, start): # pylint: disable=unused-argument
@@ -123,14 +117,14 @@ def get_url(path):
 def main():
     location = flask.request.args.get('location')
     if location is None:
-        return error("No value received for parameter 'location'")
+        flask.abort(400, "No 'location' parameter given. %s" % valids)
     if radars.get(location) is None:
-        return error("Bad location value '%s'" % location)
+        flask.abort(400, "Bad location '%s'. %s" % (location, valids))
     now = int(time.time())
     start = now - (now % radar_interval_sec)
     loop = get_loop(location, start)
     if loop is None:
-        return error('Current radar imagery unavailable for %s' % location, values=False)
+        flask.abort(404, 'Current radar imagery unavailable for %s' % location)
     return flask.Response(loop, mimetype='image/jpeg')
 
 
