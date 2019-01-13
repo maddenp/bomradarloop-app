@@ -5,8 +5,8 @@
 import datetime as dt
 import functools
 import io
-import json
 import multiprocessing.dummy
+import sys
 import time
 
 import flask
@@ -49,20 +49,20 @@ valids = 'Valid locations are: %s' % ', '.join(radars.keys())
 
 @functools.lru_cache(maxsize=len(radars))
 def get_bg(location, start): # pylint: disable=unused-argument
-    print('Getting background for %s at %s' % (location, start))
+    log('Getting background for %s at %s' % (location, start))
     url = get_url('products/radar_transparencies/IDR%s.background.png' % radars[location])
     return get_image(url)
 
 
 @functools.lru_cache(maxsize=len(radars)*6)
 def get_fg(location, time_str):
-    print('Getting foreground for %s at %s' % (location, time_str))
+    log('Getting foreground for %s at %s' % (location, time_str))
     url = get_url('/radar/IDR%s.T.%s.png' % (radars[location], time_str))
     return get_image(url)
 
 
 def get_image(url):
-    print('Getting image %s' % url)
+    log('Getting image %s' % url)
     response = requests.get(url)
     if response.status_code == 200:
         return PIL.Image.open(io.BytesIO(response.content)).convert('RGBA')
@@ -70,7 +70,7 @@ def get_image(url):
 
 
 def get_frames(location, start):
-    print('Getting frames for %s at %s' % (location, start))
+    log('Getting frames for %s at %s' % (location, start))
     bg = get_bg(location, start)
     get = lambda time_str: get_fg(location, time_str)
     raw = multiprocessing.dummy.Pool(nimages).map(get, get_time_strs(start))
@@ -83,12 +83,12 @@ def get_frames(location, start):
 
 @functools.lru_cache(maxsize=len(radars))
 def get_loop(location, start):
-    print('Getting loop for %s at %s' % (location, start))
+    log('Getting loop for %s at %s' % (location, start))
     loop = io.BytesIO()
     frames = get_frames(location, start)
     if frames is None:
         return None
-    print('Got %s frames for %s at %s' % (len(frames), location, start))
+    log('Got %s frames for %s at %s' % (len(frames), location, start))
     frames[0].save(
         loop,
         append_images=frames[1:],
@@ -102,14 +102,19 @@ def get_loop(location, start):
 
 @functools.lru_cache(maxsize=1)
 def get_time_strs(start):
-    print('Getting time strings starting at %s' % start)
+    log('Getting time strings starting at %s' % start)
     mkdt = lambda n: dt.datetime.fromtimestamp(start - (radar_interval_sec * n), tz=dt.timezone.utc)
     return [mkdt(n).strftime('%Y%m%d%H%M') for n in range(nimages, 0, -1)]
 
 
 def get_url(path):
-    print('Getting URL for path %s' % path)
+    log('Getting URL for path %s' % path)
     return 'http://www.bom.gov.au/%s' % path
+
+
+def log(msg):
+    print(msg)
+    sys.stdout.flush()
 
 
 @app.route('/')
