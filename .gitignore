@@ -1,3 +1,4 @@
 *.gif
 *.png
 __pycache__
+lib

@@ -57,14 +57,14 @@ def error(msg, values=True):
 @functools.lru_cache(maxsize=len(radars))
 def get_bg(location, start): # pylint: disable=unused-argument
     app.logger.info('Getting background for %s at %s', location, start)
-    url = get_url(f'products/radar_transparencies/IDR{radars[location]}.background.png')
+    url = get_url('products/radar_transparencies/IDR%s.background.png' % radars[location])
     return get_image(url)
 
 
 @functools.lru_cache(maxsize=len(radars)*6)
 def get_fg(location, time_str):
     app.logger.info('Getting foreground for %s at %s', location, time_str)
-    url = get_url(f'/radar/IDR{radars[location]}.T.{time_str}.png')
+    url = get_url('/radar/IDR%s.T.%s.png' % (radars[location], time_str))
     return get_image(url)
 
 
@@ -116,7 +116,7 @@ def get_time_strs(start):
 
 def get_url(path):
     app.logger.debug('Getting URL for path %s', path)
-    return f'http://www.bom.gov.au/{path}'
+    return 'http://www.bom.gov.au/%s' % path
 
 
 @app.route('/')
