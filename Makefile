@@ -1,4 +1,4 @@
-SHELL=/bin/bash
+SHELL   = /bin/bash
 TARGETS = deploy devserver
 
 .ONESHELL:
