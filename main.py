@@ -48,17 +48,16 @@ app = flask.Flask(__name__)
 valids = 'Valid locations are: %s' % ', '.join(radars.keys())
 
 @functools.lru_cache(maxsize=len(radars))
-def get_bg(location, start): # pylint: disable=unused-argument
+def get_base(location, start): # pylint: disable=unused-argument
     log('Getting background for %s at %s' % (location, start))
     url = get_url('products/radar_transparencies/IDR%s.background.png' % radars[location])
-    return get_image(url)
-
-
-@functools.lru_cache(maxsize=len(radars)*6)
-def get_fg(location, time_str):
-    log('Getting foreground for %s at %s' % (location, time_str))
-    url = get_url('/radar/IDR%s.T.%s.png' % (radars[location], time_str))
-    return get_image(url)
+    base = get_image(url)
+    for layer in ('topography', 'locations', 'range'):
+        log('Getting %s for %s at %s' % (layer, location, start))
+        url = get_url('products/radar_transparencies/IDR%s.%s.png' % (radars[location], layer))
+        image = get_image(url)
+        base = PIL.Image.alpha_composite(base, image)
+    return base
 
 
 def get_image(url):
@@ -71,14 +70,14 @@ def get_image(url):
 
 def get_frames(location, start):
     log('Getting frames for %s at %s' % (location, start))
-    bg = get_bg(location, start)
-    get = lambda time_str: get_fg(location, time_str)
+    base = get_base(location, start)
+    get = lambda time_str: get_wximg(location, time_str)
     raw = multiprocessing.dummy.Pool(nimages).map(get, get_time_strs(start))
-    fgs = [x for x in raw if x is not None]
-    if not fgs:
+    wximgs = [x for x in raw if x is not None]
+    if not wximgs:
         return None
-    comp = lambda fg: PIL.Image.alpha_composite(bg, fg)
-    return multiprocessing.dummy.Pool(len(fgs)).map(comp, fgs)
+    comp = lambda wximg: PIL.Image.alpha_composite(base, wximg)
+    return multiprocessing.dummy.Pool(len(wximgs)).map(comp, wximgs)
 
 
 @functools.lru_cache(maxsize=len(radars))
@@ -110,6 +109,13 @@ def get_time_strs(start):
 def get_url(path):
     log('Getting URL for path %s' % path)
     return 'http://www.bom.gov.au/%s' % path
+
+
+@functools.lru_cache(maxsize=len(radars)*6)
+def get_wximg(location, time_str):
+    log('Getting radar imagery for %s at %s' % (location, time_str))
+    url = get_url('/radar/IDR%s.T.%s.png' % (radars[location], time_str))
+    return get_image(url)
 
 
 def log(msg):
