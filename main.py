@@ -134,38 +134,3 @@ def main():
 
 if __name__ == '__main__':
     app.run()
-
-lores_radars = {
-    'Albany': '313',
-    'AliceSprings': '253',
-    'Bairnsdale': '683',
-    'Bowen': '243',
-    'Broome': '173',
-    'Carnarvon': '053',
-    'Ceduna': '333',
-    'Dampier': '153',
-    'Esperance': '323',
-    'Geraldton': '063',
-    'Giles': '443',
-    'Gladstone': '233',
-    'Gove': '093',
-    'Grafton': '283',
-    'HallsCreek': '393',
-    'Katherine': '423',
-    'Learmonth': '293',
-    'Longreach': '563',
-    'Mackay': '223',
-    'Marburg': '503',
-    'Mildura': '303',
-    'Moree': '533',
-    'MorningtonIs': '363',
-    'MtGambier': '143',
-    'NorfolkIs': '623',
-    'PortHedland': '163',
-    'SellicksHill': '463',
-    'WaggaWagga': '553',
-    'Warrego': '673',
-    'WillisIs': '413',
-    'Woomera': '273',
-    'Wyndham': '073',
-    }
