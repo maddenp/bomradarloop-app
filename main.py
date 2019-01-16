@@ -48,16 +48,32 @@ app = flask.Flask(__name__)
 valids = 'Valid locations are: %s' % ', '.join(radars.keys())
 
 @functools.lru_cache(maxsize=len(radars))
-def get_base(location, start): # pylint: disable=unused-argument
+def get_background(location, start): # pylint: disable=unused-argument
     log('Getting background for %s at %s' % (location, start))
     url = get_url('products/radar_transparencies/IDR%s.background.png' % radars[location])
-    base = get_image(url)
+    background = get_image(url)
     for layer in ('topography', 'locations', 'range'):
         log('Getting %s for %s at %s' % (layer, location, start))
         url = get_url('products/radar_transparencies/IDR%s.%s.png' % (radars[location], layer))
         image = get_image(url)
-        base = PIL.Image.alpha_composite(base, image)
-    return base
+        background = PIL.Image.alpha_composite(background, image)
+    return background
+
+
+def get_frames(location, start):
+    log('Getting frames for %s at %s' % (location, start))
+    get = lambda time_str: get_wximg(location, time_str)
+    raw = multiprocessing.dummy.Pool(nimages).map(get, get_time_strs(start))
+    wximages = [x for x in raw if x is not None]
+    if not wximages:
+        return None
+    p = multiprocessing.dummy.Pool(len(wximages))
+    background = get_background(location, start)
+    composites = p.map(lambda x: PIL.Image.alpha_composite(background, x), wximages)
+    legend = get_legend(start)
+    frames = p.map(lambda _: legend.copy(), composites)
+    p.map(lambda x: x[0].paste(x[1], (0,0)), zip(frames, composites))
+    return frames
 
 
 def get_image(url):
@@ -68,16 +84,11 @@ def get_image(url):
     return None
 
 
-def get_frames(location, start):
-    log('Getting frames for %s at %s' % (location, start))
-    base = get_base(location, start)
-    get = lambda time_str: get_wximg(location, time_str)
-    raw = multiprocessing.dummy.Pool(nimages).map(get, get_time_strs(start))
-    wximgs = [x for x in raw if x is not None]
-    if not wximgs:
-        return None
-    comp = lambda wximg: PIL.Image.alpha_composite(base, wximg)
-    return multiprocessing.dummy.Pool(len(wximgs)).map(comp, wximgs)
+@functools.lru_cache(maxsize=len(radars))
+def get_legend(start): # pylint: disable=unused-argument
+    log('Getting legend at %s' % start)
+    url = get_url('products/radar_transparencies/IDR.legend.0.png')
+    return get_image(url)
 
 
 @functools.lru_cache(maxsize=len(radars))
