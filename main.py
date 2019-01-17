@@ -13,22 +13,22 @@ import flask
 import PIL.Image
 import requests
 
-nimages = 6
+nimages = 6 # frames per animated GIF
 radar_interval_sec = 360 # 6 min x 60 sec/min
 
 radars = {
-    'Adelaide': '643',
+    'Adelaide': '643', # weird intervals
     'Brisbane': '663',
     'Cairns': '193',
     'Canberra': '403',
     'Darwin': '633',
-    'Emerald': '723',
+    'Emerald': '723', # weird intervals
     'Gympie': '083',
     'Hobart': '763',
     'Kalgoorlie': '483',
     'Melbourne': '023',
     'MountIsa': '753',
-    'Namoi': '693',
+    'Namoi': '693', # weird intervals
     'Newcastle': '043',
     'Newdegate': '383',
     'NWTasmania': '523',
@@ -49,18 +49,43 @@ valids = 'Valid locations are: %s' % ', '.join(radars.keys())
 
 @functools.lru_cache(maxsize=len(radars))
 def get_background(location, start): # pylint: disable=unused-argument
+
+    '''
+    Fetch the background map, then the topography, locations (e.g. city names),
+    and distance-from-radar range markings, and merge into a single image. Cache
+    one image per location, but also consider the 'start' value when caching so
+    that bad background images (e.g. with one or more missing layers) will be
+    replaced in the next interval.
+    '''
+
     log('Getting background for %s at %s' % (location, start))
     url = get_url('products/radar_transparencies/IDR%s.background.png' % radars[location])
     background = get_image(url)
+    if background is None:
+        return None
     for layer in ('topography', 'locations', 'range'):
         log('Getting %s for %s at %s' % (layer, location, start))
         url = get_url('products/radar_transparencies/IDR%s.%s.png' % (radars[location], layer))
         image = get_image(url)
-        background = PIL.Image.alpha_composite(background, image)
+        if image is not None:
+            background = PIL.Image.alpha_composite(background, image)
     return background
 
 
 def get_frames(location, start):
+
+    '''
+    Use a thread pool to fetch a set of current radar images in parallel, then
+    get a background image for this location, combine it with the colorbar
+    legend, and finally composite each radar image onto a copy of the combined
+    background/legend image.
+
+    The 'wximages' list is created so that requested images that could not be
+    fetched are excluded, so that the set of frames will be a best-effor set of
+    whatever was actually available at request time. If the list is empty, None
+    is returned; , the caller can decide how to handle that.
+    '''
+
     log('Getting frames for %s at %s' % (location, start))
     get = lambda time_str: get_wximg(location, time_str)
     raw = multiprocessing.dummy.Pool(nimages).map(get, get_time_strs(start))
@@ -69,14 +94,23 @@ def get_frames(location, start):
         return None
     p = multiprocessing.dummy.Pool(len(wximages))
     background = get_background(location, start)
+    if background is None:
+        return None
     composites = p.map(lambda x: PIL.Image.alpha_composite(background, x), wximages)
     legend = get_legend(start)
+    if legend is None:
+        return None
     frames = p.map(lambda _: legend.copy(), composites)
-    p.map(lambda x: x[0].paste(x[1], (0,0)), zip(frames, composites))
+    p.map(lambda x: x[0].paste(x[1], (0, 0)), zip(frames, composites))
     return frames
 
 
 def get_image(url):
+
+    '''
+    Fetch an image from the BOM.
+    '''
+
     log('Getting image %s' % url)
     response = requests.get(url)
     if response.status_code == 200:
@@ -86,6 +120,12 @@ def get_image(url):
 
 @functools.lru_cache(maxsize=len(radars))
 def get_legend(start): # pylint: disable=unused-argument
+
+    '''
+    Fetch the BOM colorbar legend image. See comment in get_background() in re:
+    caching.
+    '''
+
     log('Getting legend at %s' % start)
     url = get_url('products/radar_transparencies/IDR.legend.0.png')
     return get_image(url)
@@ -93,6 +133,13 @@ def get_legend(start): # pylint: disable=unused-argument
 
 @functools.lru_cache(maxsize=len(radars))
 def get_loop(location, start):
+
+    '''
+    Return an animated GIF comprising a set of frames, where each frame includes
+    a background, one or more supplemental layers, a colorbar legend, and a
+    radar image. See comment in get_background() in re: caching.
+    '''
+
     log('Getting loop for %s at %s' % (location, start))
     loop = io.BytesIO()
     frames = get_frames(location, start)
@@ -112,30 +159,72 @@ def get_loop(location, start):
 
 @functools.lru_cache(maxsize=1)
 def get_time_strs(start):
+
+    '''
+    Return a list of strings representing YYYYMMDDHHMM times for the most recent
+    set of radar images to be used to create the animated GIF.
+
+    NB: This currently assumes that radar images are available at 6-minute
+    intervals, though this is not true for even some of the high-res radars
+    currently defined (marked as 'weird intervals' in the 'radars' has defined
+    above. This needs to be generalized to deal with more radars.
+    '''
+
     log('Getting time strings starting at %s' % start)
     mkdt = lambda n: dt.datetime.fromtimestamp(start - (radar_interval_sec * n), tz=dt.timezone.utc)
     return [mkdt(n).strftime('%Y%m%d%H%M') for n in range(nimages, 0, -1)]
 
 
 def get_url(path):
+
+    '''
+    Return a canonical URL for a suffix path on the BOM website.
+    '''
+
     log('Getting URL for path %s' % path)
     return 'http://www.bom.gov.au/%s' % path
 
 
 @functools.lru_cache(maxsize=len(radars)*6)
 def get_wximg(location, time_str):
+
+    '''
+    Return a radar weather image from the BOM website. Note that get_image()
+    returns None if the image could not be fetched, so the caller must deal
+    with that possibility.
+    '''
+
     log('Getting radar imagery for %s at %s' % (location, time_str))
     url = get_url('/radar/IDR%s.T.%s.png' % (radars[location], time_str))
     return get_image(url)
 
 
 def log(msg):
+
+    '''
+    Print log messages to stdout so that e.g. Google App Engine can incorporate
+    them into overall app logging. Flush prints so that log messages appear one
+    per line.
+    '''
+
     print(msg)
     sys.stdout.flush()
 
 
 @app.route('/')
 def main():
+
+    '''
+    The mandatory 'location' URL parameter must match one of the keys of the
+    'radars' list, above. An HTTP error with instructive information is returned
+    for erroneous requests. Otherwise, a 'start' timestamp corresponding to the
+    most recent radar-imagery interval is used to request an animated GIF loop
+    for the given location.
+
+    NB: The code currently assumes a 6-minute interval for all supported radars.
+    This should be generalized to support more radars.
+    '''
+
     location = flask.request.args.get('location')
     if location is None:
         flask.abort(400, "No 'location' parameter given. %s" % valids)
