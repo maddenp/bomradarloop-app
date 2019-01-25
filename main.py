@@ -17,30 +17,126 @@ nimages = 6 # frames per animated GIF
 radar_interval_sec = 360 # 6 min x 60 sec/min
 
 radars = {
-    'Adelaide': '643', # weird intervals
-    'Brisbane': '663',
-    'Cairns': '193',
-    'Canberra': '403',
-    'Darwin': '633',
-    'Emerald': '723', # weird intervals
-    'Gympie': '083',
-    'Hobart': '763',
-    'Kalgoorlie': '483',
-    'Melbourne': '023',
-    'MountIsa': '753',
-    'Namoi': '693', # weird intervals
-    'Newcastle': '043',
-    'Newdegate': '383',
-    'NWTasmania': '523',
-    'Perth': '703',
-    'SouthDoodlakine': '583',
-    'Sydney': '713',
-    'Townsville': '733',
-    'Warruwi': '773',
-    'Watheroo': '793',
-    'Weipa': '783',
-    'Wollongong': '033',
-    'Yarrawonga': '493',
+    'Adelaide': {
+        'id': '643',
+        'delta': 360,
+        'frames': 6,
+    },
+    'Brisbane': {
+        'id': '663',
+        'delta': 360,
+        'frames': 6,
+    },
+    'Cairns': {
+        'id': '193',
+        'delta': 360,
+        'frames': 6,
+    },
+    'Canberra': {
+        'id': '403',
+        'delta': 360,
+        'frames': 6,
+    },
+    'Darwin': {
+        'id': '633',
+        'delta': 360,
+        'frames': 6,
+    },
+    'Emerald': {
+        'id': '723',
+        'delta': 360,
+        'frames': 6,
+    },
+    'Gympie': {
+        'id': '083',
+        'delta': 360,
+        'frames': 6,
+    },
+    'Hobart': {
+        'id': '763',
+        'delta': 360,
+        'frames': 6,
+    },
+    'Kalgoorlie': {
+        'id': '483',
+        'delta': 360,
+        'frames': 6,
+    },
+    'Melbourne': {
+        'id': '023',
+        'delta': 360,
+        'frames': 6,
+    },
+    'MountIsa': {
+        'id': '753',
+        'delta': 360,
+        'frames': 6,
+    },
+    'Namoi': {
+        'id': '693',
+        'delta': 360,
+        'frames': 6,
+    },
+    'Newcastle': {
+        'id': '043',
+        'delta': 360,
+        'frames': 6,
+    },
+    'Newdegate': {
+        'id': '383',
+        'delta': 360,
+        'frames': 6,
+    },
+    'NWTasmania': {
+        'id': '523',
+        'delta': 360,
+        'frames': 6,
+    },
+    'Perth': {
+        'id': '703',
+        'delta': 360,
+        'frames': 6,
+    },
+    'SouthDoodlakine': {
+        'id': '583',
+        'delta': 360,
+        'frames': 6,
+    },
+    'Sydney': {
+        'id': '713',
+        'delta': 360,
+        'frames': 6,
+    },
+    'Townsville': {
+        'id': '733',
+        'delta': 360,
+        'frames': 6,
+    },
+    'Warruwi': {
+        'id': '773',
+        'delta': 360,
+        'frames': 6,
+    },
+    'Watheroo': {
+        'id': '793',
+        'delta': 360,
+        'frames': 6,
+    },
+    'Weipa': {
+        'id': '783',
+        'delta': 360,
+        'frames': 6,
+    },
+    'Wollongong': {
+        'id': '033',
+        'delta': 360,
+        'frames': 6,
+    },
+    'Yarrawonga': {
+        'id': '493',
+        'delta': 360,
+        'frames': 6,
+    },
 }
 
 app = flask.Flask(__name__)
@@ -59,13 +155,13 @@ def get_background(location, start): # pylint: disable=unused-argument
     '''
 
     log('Getting background for %s at %s' % (location, start))
-    url = get_url('products/radar_transparencies/IDR%s.background.png' % radars[location])
+    url = get_url('products/radar_transparencies/IDR%s.background.png' % radars[location]['id'])
     background = get_image(url)
     if background is None:
         return None
     for layer in ('topography', 'locations', 'range'):
         log('Getting %s for %s at %s' % (layer, location, start))
-        url = get_url('products/radar_transparencies/IDR%s.%s.png' % (radars[location], layer))
+        url = get_url('products/radar_transparencies/IDR%s.%s.png' % (radars[location]['id'], layer))
         image = get_image(url)
         if image is not None:
             background = PIL.Image.alpha_composite(background, image)
@@ -195,7 +291,7 @@ def get_wximg(location, time_str):
     '''
 
     log('Getting radar imagery for %s at %s' % (location, time_str))
-    url = get_url('/radar/IDR%s.T.%s.png' % (radars[location], time_str))
+    url = get_url('/radar/IDR%s.T.%s.png' % (radars[location]['id'], time_str))
     return get_image(url)
 
 
