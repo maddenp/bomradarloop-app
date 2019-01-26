@@ -55,9 +55,9 @@ def get_frames(location, start):
     background/legend image.
 
     The 'wximages' list is created so that requested images that could not be
-    fetched are excluded, so that the set of frames will be a best-effor set of
+    fetched are excluded, so that the set of frames will be a best-effort set of
     whatever was actually available at request time. If the list is empty, None
-    is returned; , the caller can decide how to handle that.
+    is returned; the caller can decide how to handle that.
     '''
 
     log('Getting frames for %s at %s' % (location, start))
@@ -136,17 +136,13 @@ def get_time_strs(location, start):
     '''
     Return a list of strings representing YYYYMMDDHHMM times for the most recent
     set of radar images to be used to create the animated GIF.
-
-    NB: This currently assumes that radar images are available at 6-minute
-    intervals, though this is not true for even some of the high-res radars
-    currently defined (marked as 'weird intervals' in the 'radars' has defined
-    above. This needs to be generalized to deal with more radars.
     '''
 
     log('Getting time strings starting at %s' % start)
     delta = radars[location]['delta']
     mkdt = lambda n: dt.datetime.fromtimestamp(start - (delta * n), tz=dt.timezone.utc)
-    return [mkdt(n).strftime('%Y%m%d%H%M') for n in range(radars[location]['frames'], 0, -1)]
+    frames = radars[location]['frames']
+    return [mkdt(n).strftime('%Y%m%d%H%M') for n in range(frames, 0, -1)]
 
 
 def get_url(path):
@@ -194,9 +190,6 @@ def main():
     for erroneous requests. Otherwise, a 'start' timestamp corresponding to the
     most recent radar-imagery interval is used to request an animated GIF loop
     for the given location.
-
-    NB: The code currently assumes a 6-minute interval for all supported radars.
-    This should be generalized to support more radars.
     '''
 
     location = flask.request.args.get('location')
