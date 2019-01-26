@@ -13,9 +13,6 @@ import flask
 import PIL.Image
 import requests
 
-nimages = 6 # frames per animated GIF
-radar_interval_sec = 360 # 6 min x 60 sec/min
-
 radars = {
     'Adelaide': {
         'id': '643',
@@ -184,7 +181,7 @@ def get_frames(location, start):
 
     log('Getting frames for %s at %s' % (location, start))
     get = lambda time_str: get_wximg(location, time_str)
-    raw = multiprocessing.dummy.Pool(nimages).map(get, get_time_strs(start))
+    raw = multiprocessing.dummy.Pool(radars[location]['frames']).map(get, get_time_strs(location, start))
     wximages = [x for x in raw if x is not None]
     if not wximages:
         return None
@@ -253,8 +250,7 @@ def get_loop(location, start):
     return loop.getvalue()
 
 
-@functools.lru_cache(maxsize=1)
-def get_time_strs(start):
+def get_time_strs(location, start):
 
     '''
     Return a list of strings representing YYYYMMDDHHMM times for the most recent
@@ -267,8 +263,9 @@ def get_time_strs(start):
     '''
 
     log('Getting time strings starting at %s' % start)
-    mkdt = lambda n: dt.datetime.fromtimestamp(start - (radar_interval_sec * n), tz=dt.timezone.utc)
-    return [mkdt(n).strftime('%Y%m%d%H%M') for n in range(nimages, 0, -1)]
+    delta = radars[location]['delta']
+    mkdt = lambda n: dt.datetime.fromtimestamp(start - (delta * n), tz=dt.timezone.utc)
+    return [mkdt(n).strftime('%Y%m%d%H%M') for n in range(radars[location]['frames'], 0, -1)]
 
 
 def get_url(path):
@@ -327,7 +324,8 @@ def main():
     if radars.get(location) is None:
         flask.abort(400, "Bad location '%s'. %s" % (location, valids))
     now = int(time.time())
-    start = now - (now % radar_interval_sec)
+    delta = radars[location]['delta']
+    start = now - (now % delta)
     loop = get_loop(location, start)
     if loop is None:
         flask.abort(404, 'Current radar imagery unavailable for %s' % location)
