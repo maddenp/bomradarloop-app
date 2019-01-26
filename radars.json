@@ -1,66 +1,61 @@
 {
-  "Newcastle": {
-    "id": "043",
+  "Adelaide": {
+    "id": "643",
     "delta": 360,
     "frames": 6
+  },
+  "Albany": {
+    "id": "313",
+    "delta": 600,
+    "frames": 4
+  },
+  "AliceSprings": {
+    "id": "253",
+    "delta": 600,
+    "frames": 4
+  },
+  "Bairnsdale": {
+    "id": "683",
+    "delta": 600,
+    "frames": 4
+  },
+  "Bowen": {
+    "id": "243",
+    "delta": 600,
+    "frames": 4
+  },
+  "Brisbane": {
+    "id": "663",
+    "delta": 360,
+    "frames": 6
+  },
+  "Broome": {
+    "id": "173",
+    "delta": 600,
+    "frames": 4
   },
   "Cairns": {
     "id": "193",
     "delta": 360,
     "frames": 6
   },
-  "Wollongong": {
-    "id": "033",
+  "Canberra": {
+    "id": "403",
     "delta": 360,
     "frames": 6
   },
-  "Gympie": {
-    "id": "083",
-    "delta": 360,
-    "frames": 6
+  "Carnarvon": {
+    "id": "053",
+    "delta": 600,
+    "frames": 4
   },
-  "MountIsa": {
-    "id": "753",
-    "delta": 360,
-    "frames": 6
+  "Ceduna": {
+    "id": "333",
+    "delta": 600,
+    "frames": 4
   },
-  "Adelaide": {
-    "id": "643",
-    "delta": 360,
-    "frames": 6
-  },
-  "Perth": {
-    "id": "703",
-    "delta": 360,
-    "frames": 6
-  },
-  "Kalgoorlie": {
-    "id": "483",
-    "delta": 360,
-    "frames": 6
-  },
-  "NWTasmania": {
-    "id": "523",
-    "delta": 360,
-    "frames": 6
-  },
-  "Newdegate": {
-    "id": "383",
-    "delta": 360,
-    "frames": 6
-  },
-  "Watheroo": {
-    "id": "793",
-    "delta": 360,
-    "frames": 6
-  },
-  "Townsville": {
-    "id": "733",
-    "delta": 360,
-    "frames": 6
-  },
-  "Emerald": {
-    "id": "723",
+  "Dampier": {
+    "id": "153",
     "delta": 600,
     "frames": 4
   },
@@ -69,25 +64,155 @@
     "delta": 360,
     "frames": 6
   },
-  "Weipa": {
-    "id": "783",
+  "Emerald": {
+    "id": "723",
+    "delta": 600,
+    "frames": 4
+  },
+  "Esperance": {
+    "id": "323",
+    "delta": 600,
+    "frames": 4
+  },
+  "Geraldton": {
+    "id": "063",
+    "delta": 600,
+    "frames": 4
+  },
+  "Giles": {
+    "id": "443",
+    "delta": 600,
+    "frames": 4
+  },
+  "Gladstone": {
+    "id": "233",
+    "delta": 600,
+    "frames": 4
+  },
+  "Gove": {
+    "id": "093",
+    "delta": 600,
+    "frames": 4
+  },
+  "Grafton": {
+    "id": "283",
+    "delta": 600,
+    "frames": 4
+  },
+  "Gympie": {
+    "id": "083",
     "delta": 360,
     "frames": 6
   },
-  "Brisbane": {
-    "id": "663",
-    "delta": 360,
-    "frames": 6
-  },
-  "Yarrawonga": {
-    "id": "493",
-    "delta": 360,
-    "frames": 6
+  "HallsCreek": {
+    "id": "393",
+    "delta": 600,
+    "frames": 4
   },
   "Hobart": {
     "id": "763",
     "delta": 360,
     "frames": 6
+  },
+  "Kalgoorlie": {
+    "id": "483",
+    "delta": 360,
+    "frames": 6
+  },
+  "Katherine": {
+    "id": "423",
+    "delta": 360,
+    "frames": 6
+  },
+  "Learmonth": {
+    "id": "293",
+    "delta": 600,
+    "frames": 4
+  },
+  "Longreach": {
+    "id": "563",
+    "delta": 600,
+    "frames": 4
+  },
+  "Mackay": {
+    "id": "223",
+    "delta": 600,
+    "frames": 4
+  },
+  "Marburg": {
+    "id": "503",
+    "delta": 600,
+    "frames": 4
+  },
+  "Melbourne": {
+    "id": "023",
+    "delta": 360,
+    "frames": 6
+  },
+  "Mildura": {
+    "id": "303",
+    "delta": 600,
+    "frames": 4
+  },
+  "Moree": {
+    "id": "533",
+    "delta": 600,
+    "frames": 4
+  },
+  "MorningtonIs": {
+    "id": "363",
+    "delta": 600,
+    "frames": 4
+  },
+  "MountIsa": {
+    "id": "753",
+    "delta": 360,
+    "frames": 6
+  },
+  "MtGambier": {
+    "id": "143",
+    "delta": 600,
+    "frames": 4
+  },
+  "Namoi": {
+    "id": "693",
+    "delta": 600,
+    "frames": 4
+  },
+  "Newcastle": {
+    "id": "043",
+    "delta": 360,
+    "frames": 6
+  },
+  "Newdegate": {
+    "id": "383",
+    "delta": 360,
+    "frames": 6
+  },
+  "NorfolkIs": {
+    "id": "623",
+    "delta": 600,
+    "frames": 4
+  },
+  "NWTasmania": {
+    "id": "523",
+    "delta": 360,
+    "frames": 6
+  },
+  "Perth": {
+    "id": "703",
+    "delta": 360,
+    "frames": 6
+  },
+  "PortHedland": {
+    "id": "163",
+    "delta": 600,
+    "frames": 4
+  },
+  "SellicksHill": {
+    "id": "463",
+    "delta": 600,
+    "frames": 4
   },
   "SouthDoodlakine": {
     "id": "583",
@@ -99,8 +224,18 @@
     "delta": 360,
     "frames": 6
   },
-  "Namoi": {
-    "id": "693",
+  "Townsville": {
+    "id": "733",
+    "delta": 360,
+    "frames": 6
+  },
+  "WaggaWagga": {
+    "id": "553",
+    "delta": 600,
+    "frames": 4
+  },
+  "Warrego": {
+    "id": "673",
     "delta": 600,
     "frames": 4
   },
@@ -109,13 +244,38 @@
     "delta": 360,
     "frames": 6
   },
-  "Melbourne": {
-    "id": "023",
+  "Watheroo": {
+    "id": "793",
     "delta": 360,
     "frames": 6
   },
-  "Canberra": {
-    "id": "403",
+  "Weipa": {
+    "id": "783",
+    "delta": 360,
+    "frames": 6
+  },
+  "WillisIs": {
+    "id": "413",
+    "delta": 600,
+    "frames": 4
+  },
+  "Wollongong": {
+    "id": "033",
+    "delta": 360,
+    "frames": 6
+  },
+  "Woomera": {
+    "id": "273",
+    "delta": 600,
+    "frames": 4
+  },
+  "Wyndham": {
+    "id": "073",
+    "delta": 600,
+    "frames": 4
+  },
+  "Yarrawonga": {
+    "id": "493",
     "delta": 360,
     "frames": 6
   }

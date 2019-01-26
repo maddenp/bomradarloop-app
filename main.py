@@ -19,7 +19,7 @@ with open('radars.json', 'r') as f:
 
 app = flask.Flask(__name__)
 
-valids = 'Valid locations are: %s' % ', '.join(radars.keys())
+valids = 'Valid locations are: %s' % ', '.join(sorted(radars.keys()))
 
 @functools.lru_cache(maxsize=len(radars))
 def get_background(location, start): # pylint: disable=unused-argument
