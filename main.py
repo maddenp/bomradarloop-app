@@ -5,6 +5,7 @@
 import datetime as dt
 import functools
 import io
+import json
 import multiprocessing.dummy
 import sys
 import time
@@ -13,39 +14,12 @@ import flask
 import PIL.Image
 import requests
 
-nimages = 6 # frames per animated GIF
-radar_interval_sec = 360 # 6 min x 60 sec/min
-
-radars = {
-    'Adelaide': '643', # weird intervals
-    'Brisbane': '663',
-    'Cairns': '193',
-    'Canberra': '403',
-    'Darwin': '633',
-    'Emerald': '723', # weird intervals
-    'Gympie': '083',
-    'Hobart': '763',
-    'Kalgoorlie': '483',
-    'Melbourne': '023',
-    'MountIsa': '753',
-    'Namoi': '693', # weird intervals
-    'Newcastle': '043',
-    'Newdegate': '383',
-    'NWTasmania': '523',
-    'Perth': '703',
-    'SouthDoodlakine': '583',
-    'Sydney': '713',
-    'Townsville': '733',
-    'Warruwi': '773',
-    'Watheroo': '793',
-    'Weipa': '783',
-    'Wollongong': '033',
-    'Yarrawonga': '493',
-}
+with open('radars.json', 'r') as f:
+    radars = json.load(f)
 
 app = flask.Flask(__name__)
 
-valids = 'Valid locations are: %s' % ', '.join(radars.keys())
+valids = 'Valid locations are: %s' % ', '.join(sorted(radars.keys()))
 
 @functools.lru_cache(maxsize=len(radars))
 def get_background(location, start): # pylint: disable=unused-argument
@@ -59,13 +33,14 @@ def get_background(location, start): # pylint: disable=unused-argument
     '''
 
     log('Getting background for %s at %s' % (location, start))
-    url = get_url('products/radar_transparencies/IDR%s.background.png' % radars[location])
+    radar_id = radars[location]['id']
+    url = get_url('products/radar_transparencies/IDR%s.background.png' % radar_id)
     background = get_image(url)
     if background is None:
         return None
     for layer in ('topography', 'locations', 'range'):
         log('Getting %s for %s at %s' % (layer, location, start))
-        url = get_url('products/radar_transparencies/IDR%s.%s.png' % (radars[location], layer))
+        url = get_url('products/radar_transparencies/IDR%s.%s.png' % (radar_id, layer))
         image = get_image(url)
         if image is not None:
             background = PIL.Image.alpha_composite(background, image)
@@ -81,14 +56,15 @@ def get_frames(location, start):
     background/legend image.
 
     The 'wximages' list is created so that requested images that could not be
-    fetched are excluded, so that the set of frames will be a best-effor set of
+    fetched are excluded, so that the set of frames will be a best-effort set of
     whatever was actually available at request time. If the list is empty, None
-    is returned; , the caller can decide how to handle that.
+    is returned; the caller can decide how to handle that.
     '''
 
     log('Getting frames for %s at %s' % (location, start))
     get = lambda time_str: get_wximg(location, time_str)
-    raw = multiprocessing.dummy.Pool(nimages).map(get, get_time_strs(start))
+    frames = radars[location]['frames']
+    raw = multiprocessing.dummy.Pool(frames).map(get, get_time_strs(location, start))
     wximages = [x for x in raw if x is not None]
     if not wximages:
         return None
@@ -100,9 +76,9 @@ def get_frames(location, start):
     legend = get_legend(start)
     if legend is None:
         return None
-    frames = p.map(lambda _: legend.copy(), composites)
-    p.map(lambda x: x[0].paste(x[1], (0, 0)), zip(frames, composites))
-    return frames
+    loop_frames = p.map(lambda _: legend.copy(), composites)
+    p.map(lambda x: x[0].paste(x[1], (0, 0)), zip(loop_frames, composites))
+    return loop_frames
 
 
 def get_image(url):
@@ -157,22 +133,18 @@ def get_loop(location, start):
     return loop.getvalue()
 
 
-@functools.lru_cache(maxsize=1)
-def get_time_strs(start):
+def get_time_strs(location, start):
 
     '''
     Return a list of strings representing YYYYMMDDHHMM times for the most recent
     set of radar images to be used to create the animated GIF.
-
-    NB: This currently assumes that radar images are available at 6-minute
-    intervals, though this is not true for even some of the high-res radars
-    currently defined (marked as 'weird intervals' in the 'radars' has defined
-    above. This needs to be generalized to deal with more radars.
     '''
 
     log('Getting time strings starting at %s' % start)
-    mkdt = lambda n: dt.datetime.fromtimestamp(start - (radar_interval_sec * n), tz=dt.timezone.utc)
-    return [mkdt(n).strftime('%Y%m%d%H%M') for n in range(nimages, 0, -1)]
+    delta = radars[location]['delta']
+    mkdt = lambda n: dt.datetime.fromtimestamp(start - (delta * n), tz=dt.timezone.utc)
+    frames = radars[location]['frames']
+    return [mkdt(n).strftime('%Y%m%d%H%M') for n in range(frames, 0, -1)]
 
 
 def get_url(path):
@@ -195,7 +167,8 @@ def get_wximg(location, time_str):
     '''
 
     log('Getting radar imagery for %s at %s' % (location, time_str))
-    url = get_url('/radar/IDR%s.T.%s.png' % (radars[location], time_str))
+    radar_id = radars[location]['id']
+    url = get_url('/radar/IDR%s.T.%s.png' % (radar_id, time_str))
     return get_image(url)
 
 
@@ -220,9 +193,6 @@ def main():
     for erroneous requests. Otherwise, a 'start' timestamp corresponding to the
     most recent radar-imagery interval is used to request an animated GIF loop
     for the given location.
-
-    NB: The code currently assumes a 6-minute interval for all supported radars.
-    This should be generalized to support more radars.
     '''
 
     location = flask.request.args.get('location')
@@ -231,7 +201,8 @@ def main():
     if radars.get(location) is None:
         flask.abort(400, "Bad location '%s'. %s" % (location, valids))
     now = int(time.time())
-    start = now - (now % radar_interval_sec)
+    delta = radars[location]['delta']
+    start = now - (now % delta)
     loop = get_loop(location, start)
     if loop is None:
         flask.abort(404, 'Current radar imagery unavailable for %s' % location)
