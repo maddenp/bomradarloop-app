@@ -5,6 +5,7 @@
 import datetime as dt
 import functools
 import io
+import json
 import multiprocessing.dummy
 import sys
 import time
@@ -13,128 +14,8 @@ import flask
 import PIL.Image
 import requests
 
-radars = {
-    'Adelaide': {
-        'id': '643',
-        'delta': 360,
-        'frames': 6,
-    },
-    'Brisbane': {
-        'id': '663',
-        'delta': 360,
-        'frames': 6,
-    },
-    'Cairns': {
-        'id': '193',
-        'delta': 360,
-        'frames': 6,
-    },
-    'Canberra': {
-        'id': '403',
-        'delta': 360,
-        'frames': 6,
-    },
-    'Darwin': {
-        'id': '633',
-        'delta': 360,
-        'frames': 6,
-    },
-    'Emerald': {
-        'id': '723',
-        'delta': 360,
-        'frames': 6,
-    },
-    'Gympie': {
-        'id': '083',
-        'delta': 360,
-        'frames': 6,
-    },
-    'Hobart': {
-        'id': '763',
-        'delta': 360,
-        'frames': 6,
-    },
-    'Kalgoorlie': {
-        'id': '483',
-        'delta': 360,
-        'frames': 6,
-    },
-    'Melbourne': {
-        'id': '023',
-        'delta': 360,
-        'frames': 6,
-    },
-    'MountIsa': {
-        'id': '753',
-        'delta': 360,
-        'frames': 6,
-    },
-    'Namoi': {
-        'id': '693',
-        'delta': 360,
-        'frames': 6,
-    },
-    'Newcastle': {
-        'id': '043',
-        'delta': 360,
-        'frames': 6,
-    },
-    'Newdegate': {
-        'id': '383',
-        'delta': 360,
-        'frames': 6,
-    },
-    'NWTasmania': {
-        'id': '523',
-        'delta': 360,
-        'frames': 6,
-    },
-    'Perth': {
-        'id': '703',
-        'delta': 360,
-        'frames': 6,
-    },
-    'SouthDoodlakine': {
-        'id': '583',
-        'delta': 360,
-        'frames': 6,
-    },
-    'Sydney': {
-        'id': '713',
-        'delta': 360,
-        'frames': 6,
-    },
-    'Townsville': {
-        'id': '733',
-        'delta': 360,
-        'frames': 6,
-    },
-    'Warruwi': {
-        'id': '773',
-        'delta': 360,
-        'frames': 6,
-    },
-    'Watheroo': {
-        'id': '793',
-        'delta': 360,
-        'frames': 6,
-    },
-    'Weipa': {
-        'id': '783',
-        'delta': 360,
-        'frames': 6,
-    },
-    'Wollongong': {
-        'id': '033',
-        'delta': 360,
-        'frames': 6,
-    },
-    'Yarrawonga': {
-        'id': '493',
-        'delta': 360,
-        'frames': 6,
-    },
-}
+with open('radars.json', 'r') as f:
+    radars = json.load(f)
 
 app = flask.Flask(__name__)
 
