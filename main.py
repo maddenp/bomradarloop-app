@@ -33,13 +33,14 @@ def get_background(location, start): # pylint: disable=unused-argument
     '''
 
     log('Getting background for %s at %s' % (location, start))
-    url = get_url('products/radar_transparencies/IDR%s.background.png' % radars[location]['id'])
+    radar_id = radars[location]['id']
+    url = get_url('products/radar_transparencies/IDR%s.background.png' % radar_id)
     background = get_image(url)
     if background is None:
         return None
     for layer in ('topography', 'locations', 'range'):
         log('Getting %s for %s at %s' % (layer, location, start))
-        url = get_url('products/radar_transparencies/IDR%s.%s.png' % (radars[location]['id'], layer))
+        url = get_url('products/radar_transparencies/IDR%s.%s.png' % (radar_id, layer))
         image = get_image(url)
         if image is not None:
             background = PIL.Image.alpha_composite(background, image)
@@ -62,7 +63,8 @@ def get_frames(location, start):
 
     log('Getting frames for %s at %s' % (location, start))
     get = lambda time_str: get_wximg(location, time_str)
-    raw = multiprocessing.dummy.Pool(radars[location]['frames']).map(get, get_time_strs(location, start))
+    frames = radars[location]['frames']
+    raw = multiprocessing.dummy.Pool(frames).map(get, get_time_strs(location, start))
     wximages = [x for x in raw if x is not None]
     if not wximages:
         return None
@@ -74,9 +76,9 @@ def get_frames(location, start):
     legend = get_legend(start)
     if legend is None:
         return None
-    frames = p.map(lambda _: legend.copy(), composites)
-    p.map(lambda x: x[0].paste(x[1], (0, 0)), zip(frames, composites))
-    return frames
+    loop_frames = p.map(lambda _: legend.copy(), composites)
+    p.map(lambda x: x[0].paste(x[1], (0, 0)), zip(loop_frames, composites))
+    return loop_frames
 
 
 def get_image(url):
@@ -165,7 +167,8 @@ def get_wximg(location, time_str):
     '''
 
     log('Getting radar imagery for %s at %s' % (location, time_str))
-    url = get_url('/radar/IDR%s.T.%s.png' % (radars[location]['id'], time_str))
+    radar_id = radars[location]['id']
+    url = get_url('/radar/IDR%s.T.%s.png' % (radar_id, time_str))
     return get_image(url)
 
 
